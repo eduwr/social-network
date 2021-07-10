@@ -32,24 +32,23 @@ contract("SocialNetwork", ([deployer, author, tipper]) => {
 
   describe("posts", async () => {
     let result, postCount;
-    it("creates posts", async () => {
-      result = await socialNetwork.createPost("This is my first post", {
+    const content = "This is my first post";
+    before(async () => {
+      result = await socialNetwork.createPost(content, {
         from: author,
       });
 
       postCount = await socialNetwork.postCount();
+    });
 
+    it("creates posts", async () => {
       //SUCCESS
       assert.equal(postCount, 1);
       const event = result.logs[0].args;
       assert.equal(event.id.toNumber(), postCount.toNumber(), "id is correct");
       assert.equal(event.author, author, "author is correct");
       assert.equal(event.tipAmount, "0", "tip amount is correct");
-      assert.equal(
-        event.content,
-        "This is my first post",
-        "content is correct"
-      );
+      assert.equal(event.content, content, "content is correct");
 
       //FAILURE, post must have content
 
@@ -57,11 +56,54 @@ contract("SocialNetwork", ([deployer, author, tipper]) => {
     });
 
     it("lists posts", async () => {
-      // TODO
+      const post = await socialNetwork.posts(postCount);
+      assert.equal(post.id.toNumber(), postCount.toNumber(), "id is correct");
+      assert.equal(post.author, author, "author is correct");
+      assert.equal(post.tipAmount, "0", "tip amount is correct");
+      assert.equal(post.content, content, "content is correct");
     });
 
     it("allows users to tip posts", async () => {
-      // TODO
+      // Track author balance before purchase
+      let oldAuthorBalance;
+      oldAuthorBalance = await web3.eth.getBalance(author);
+      oldAuthorBalance = new web3.utils.BN(oldAuthorBalance);
+
+      const value = web3.utils.toWei("1", "Ether");
+      result = await socialNetwork.tipPost(postCount, {
+        from: tipper,
+        value,
+      });
+
+      //SUCCESS
+      assert.equal(postCount, 1);
+      const event = result.logs[0].args;
+      assert.equal(event.id.toNumber(), postCount.toNumber(), "id is correct");
+      assert.equal(event.author, author, "author is correct");
+      assert.equal(event.tipAmount, value, "tip amount is correct");
+      assert.equal(event.content, content, "content is correct");
+
+      let newAuthorBalance;
+      newAuthorBalance = await web3.eth.getBalance(author);
+      newAuthorBalance = new web3.utils.BN(newAuthorBalance);
+
+      let tipAmount;
+      tipAmount = new web3.utils.BN(value);
+
+      const expectedBalance = oldAuthorBalance.add(tipAmount);
+
+      assert.equal(
+        expectedBalance.toString(),
+        newAuthorBalance.toString(),
+        "Author balance is correct"
+      );
+
+      // FAILURE: Tries to tip a post that doesn't exists
+
+      await socialNetwork.tipPost(99, {
+        from: tipper,
+        value,
+      }).should.be.rejected;
     });
   });
 });
