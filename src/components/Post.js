@@ -28,7 +28,12 @@ export default function Post({ post }) {
               "Ether"
             )} ETH`}
           </small>
-          <button className="btn btn-link btn-sm float-right pt-0">
+          <button
+            onClick={(e) => {
+              // Call the tip function
+            }}
+            className="btn btn-link btn-sm float-right pt-0"
+          >
             <span>TIP 0.1 ETH</span>
           </button>
         </li>

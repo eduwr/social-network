@@ -3,19 +3,24 @@ import Web3 from "web3";
 
 import "./App.css";
 import Navbar from "./Navbar";
-import Post from "./Post";
+import Main from "./Main";
 
 import SocialNetwork from "../abis/SocialNetwork.json";
 
 class App extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
       account: "",
       socialNetwork: null,
       postCount: 0,
       posts: [],
+      loading: true,
     };
+
+    this.createPost = this.createPost.bind(this);
+    this.tipPost = this.tipPost.bind(this);
   }
 
   async loadWeb3() {
@@ -35,6 +40,29 @@ class App extends Component {
     await this.loadWeb3();
 
     await this.loadBlockchainData();
+  }
+
+  createPost(content) {
+    this.setState({ loading: true });
+    this.state.socialNetwork.methods
+      .createPost(content)
+      .send({
+        from: this.state.account,
+      })
+      .on("confirmation", () => {
+        this.setState({ loading: false });
+      });
+  }
+
+  tipPost(id, tipAmount) {
+    this.setState({ loading: true });
+
+    this.state.socialNetwork
+      .tipPost(id)
+      .send({ from: this.state.account, value: tipAmount })
+      .on("confirmation", () => {
+        this.setState({ loading: false });
+      });
   }
 
   async loadBlockchainData() {
@@ -64,6 +92,7 @@ class App extends Component {
           posts: [...this.state.posts, post],
         });
       }
+      this.setState({ loading: false });
     } else {
       window.alert("SocialNetwork contract not deployed to detected network.");
     }
@@ -75,21 +104,17 @@ class App extends Component {
     return (
       <div>
         <Navbar account={this.state.account} />
-        <div className="container-fluid mt-5">
-          <div className="row">
-            <main
-              role="main"
-              className="col-lg-12 ml-auto mr-auto"
-              style={{ maxWidth: "500px" }}
-            >
-              <div className="content mr-auto ml-auto">
-                {this.state.posts.map((post, idx) => {
-                  return <Post post={post} key={idx} />;
-                })}
-              </div>
-            </main>
+        {this.state.loading ? (
+          <div id="loader" className="text-center mt-5">
+            <p>Loading...</p>
           </div>
-        </div>
+        ) : (
+          <Main
+            posts={this.state.posts}
+            createPost={this.createPost}
+            tipPost={this.tipPost}
+          />
+        )}
       </div>
     );
   }
