@@ -57,10 +57,10 @@ class App extends Component {
   tipPost(id, tipAmount) {
     this.setState({ loading: true });
 
-    this.state.socialNetwork
+    this.state.socialNetwork.methods
       .tipPost(id)
       .send({ from: this.state.account, value: tipAmount })
-      .on("confirmation", () => {
+      .once("confirmation", () => {
         this.setState({ loading: false });
       });
   }
@@ -89,7 +89,9 @@ class App extends Component {
       for (let i = 1; i <= postCount; i++) {
         const post = await socialNetwork.methods.posts(i).call();
         this.setState({
-          posts: [...this.state.posts, post],
+          posts: [...this.state.posts, post].sort(
+            (a, b) => b.tipAmount - a.tipAmount
+          ),
         });
       }
       this.setState({ loading: false });

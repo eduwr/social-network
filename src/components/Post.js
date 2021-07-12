@@ -1,7 +1,7 @@
 import React from "react";
 import Identicon from "identicon.js";
 
-export default function Post({ post }) {
+export default function Post({ post, tipPost }) {
   return (
     <div className="card mb-4">
       <div className="card-header">
@@ -23,14 +23,16 @@ export default function Post({ post }) {
         </li>
         <li className="list-group-item py-2">
           <small className="float-left mt-1 text-muted">
-            {`TIPS: ${window.web3.utils.fromWei(
-              post.tipAmount.toString(),
-              "Ether"
-            )} ETH`}
+            TIPS:{" "}
+            {window.web3.utils.fromWei(post.tipAmount.toString(), "Ether")} ETH
           </small>
           <button
+            name={post.id}
             onClick={(e) => {
-              // Call the tip function
+              // const id = e.target.name;
+              const tipAmount = window.web3.utils.toWei("0.1", "Ether");
+
+              tipPost(post.id, tipAmount);
             }}
             className="btn btn-link btn-sm float-right pt-0"
           >

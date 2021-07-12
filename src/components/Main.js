@@ -40,7 +40,9 @@ export default class Main extends Component {
                 <p>&nbsp;</p>
 
                 {this.props.posts.map((post, idx) => {
-                  return <Post post={post} key={idx} />;
+                  return (
+                    <Post tipPost={this.props.tipPost} post={post} key={idx} />
+                  );
                 })}
               </div>
             </main>
