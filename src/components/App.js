@@ -1,14 +1,20 @@
 import React, { Component } from "react";
 import Web3 from "web3";
-import logo from "../logo.png";
+
 import "./App.css";
 import Navbar from "./Navbar";
+import Post from "./Post";
+
+import SocialNetwork from "../abis/SocialNetwork.json";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       account: "",
+      socialNetwork: null,
+      postCount: 0,
+      posts: [],
     };
   }
 
@@ -37,6 +43,32 @@ class App extends Component {
     const [account] = await web3.eth.getAccounts();
 
     this.setState({ account });
+
+    // Network ID
+    const networkId = await web3.eth.net.getId();
+    const networkData = SocialNetwork.networks[networkId];
+    if (networkData) {
+      const socialNetwork = web3.eth.Contract(
+        SocialNetwork.abi,
+        networkData.address
+      );
+
+      this.setState({ socialNetwork });
+
+      const postCount = await socialNetwork.methods.postCount().call();
+      this.setState({ postCount });
+
+      for (let i = 1; i <= postCount; i++) {
+        const post = await socialNetwork.methods.posts(i).call();
+        this.setState({
+          posts: [...this.state.posts, post],
+        });
+      }
+    } else {
+      window.alert("SocialNetwork contract not deployed to detected network.");
+    }
+    // Address
+    // ABI
   }
 
   render() {
@@ -45,30 +77,15 @@ class App extends Component {
         <Navbar account={this.state.account} />
         <div className="container-fluid mt-5">
           <div className="row">
-            <main role="main" className="col-lg-12 d-flex text-center">
+            <main
+              role="main"
+              className="col-lg-12 ml-auto mr-auto"
+              style={{ maxWidth: "500px" }}
+            >
               <div className="content mr-auto ml-auto">
-                <a
-                  href="http://www.dappuniversity.com/bootcamp"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src={logo} className="App-logo" alt="logo" />
-                </a>
-                <h1>Dapp University Starter Kit</h1>
-                <p>
-                  Edit <code>src/components/App.js</code> and save to reload.
-                </p>
-                <a
-                  className="App-link"
-                  href="http://www.dappuniversity.com/bootcamp"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  LEARN BLOCKCHAIN{" "}
-                  <u>
-                    <b>NOW! </b>
-                  </u>
-                </a>
+                {this.state.posts.map((post, idx) => {
+                  return <Post post={post} key={idx} />;
+                })}
               </div>
             </main>
           </div>
